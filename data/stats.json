@@ -1,0 +1,128 @@
+{
+ "updated": "2026-10-10",
+ "county": {
+  "name": "Kiambu",
+  "code": "22",
+  "pop_2009": 1623282,
+  "pop_2019": 2417735,
+  "male_2019": 1187146,
+  "female_2019": 1230454,
+  "intersex_2019": 135,
+  "voters_2022": 1275008,
+  "constituencies": 12,
+  "wards": 60,
+  "age_2019": {
+   "0-9": 519941,
+   "10-19": 439251,
+   "20-29": 522054,
+   "30-39": 410924,
+   "40-49": 255653,
+   "50-59": 144707,
+   "60-69": 68960,
+   "70-79": 37116,
+   "80-89": 14400,
+   "90+": 4546
+  }
+ },
+ "kabete": {
+  "pop_2009": 140427,
+  "pop_2019": 199653,
+  "voters_2022": 91775,
+  "polling_stations_2013": 139,
+  "mp": "James Githua Kamau Wamacukuru (UDA), elected 2017 and re-elected 2022"
+ },
+ "subcounties": [
+  [
+   "Gatundu North",
+   106376,
+   109870
+  ],
+  [
+   "Gatundu South",
+   108415,
+   122103
+  ],
+  [
+   "Githunguri",
+   147763,
+   165232
+  ],
+  [
+   "Juja",
+   118793,
+   300948
+  ],
+  [
+   "Kabete",
+   140427,
+   199653
+  ],
+  [
+   "Kiambaa",
+   145053,
+   236400
+  ],
+  [
+   "Kiambu",
+   108698,
+   145903
+  ],
+  [
+   "Kikuyu",
+   125402,
+   187122
+  ],
+  [
+   "Lari",
+   123895,
+   135303
+  ],
+  [
+   "Limuru",
+   131132,
+   159314
+  ],
+  [
+   "Ruiru",
+   201986,
+   371111
+  ],
+  [
+   "Thika East",
+   26570,
+   38956
+  ],
+  [
+   "Thika West",
+   138772,
+   245820
+  ]
+ ],
+ "sources": [
+  {
+   "what": "Ward, constituency and county boundaries",
+   "src": "kenya-geo (IEBC-derived polygons)",
+   "url": "https://github.com/gaithoben/kenya-geo"
+  },
+  {
+   "what": "Registered voters per ward, 2022",
+   "src": "IEBC, Registered Voters per County Assembly Ward, 2022 General Election",
+   "url": "https://www.iebc.or.ke/docs/rov_per_caw.pdf"
+  },
+  {
+   "what": "Registered voters per constituency, 2022",
+   "src": "IEBC, Registered Voters per Constituency, 2022 General Election",
+   "url": "https://www.iebc.or.ke/docs/rov_per_constituency.pdf"
+  },
+  {
+   "what": "Census 2009 and 2019 by sub-county, sex and age",
+   "src": "KNBS census via City Population",
+   "url": "https://www.citypopulation.de/en/kenya/sub/admin/22__kiambu/"
+  },
+  {
+   "what": "Kabete ward populations (2009 census)",
+   "src": "Wikipedia, Kabete Constituency",
+   "url": "https://en.wikipedia.org/wiki/Kabete_Constituency"
+  }
+ ]
+}

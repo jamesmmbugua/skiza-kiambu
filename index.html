@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Yvonne Waweru | Skiza Kiambu</title>
+<meta name="description" content="Yvonne Waweru, DCP aspirant for Kiambu County Woman Representative. Map, dashboards and community needs reporting for Kiambu, starting from Kabete.">
+<meta property="og:title" content="Yvonne Waweru for Kiambu Woman Rep">
+<meta property="og:description" content="Skiza Wakenya. Tell us what your ward needs.">
+<meta property="og:image" content="assets/yvonne.jpg">
+<meta name="theme-color" content="#0f6b34">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;800&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <div class="avatar sm" id="brandAvatar"></div>
+    <div>
+      <div class="brand-title" id="brandTitle">Yvonne Waweru</div>
+      <div class="brand-sub" id="brandSub">Kiambu County Woman Rep aspirant · DCP</div>
+    </div>
+  </div>
+  <nav class="tabs" id="tabs">
+    <button data-view="home" class="active">Yvonne</button>
+    <button data-view="map">Map</button>
+    <button data-view="dash">Dashboard</button>
+    <button data-view="needs">Skiza</button>
+    <button data-view="about">Data</button>
+  </nav>
+</header>
+
+<main>
+  <!-- HOME VIEW -->
+  <section id="view-home" class="view active">
+    <div class="hero">
+      <div class="hero-inner">
+        <div class="avatar lg" id="heroAvatar"></div>
+        <div class="hero-text">
+          <div class="pill" id="heroParty"></div>
+          <h1 id="heroName"></h1>
+          <p class="hero-role" id="heroRole"></p>
+          <p class="slogan"><span id="heroSlogan"></span></p>
+          <p class="hero-tag" id="heroTag"></p>
+          <div class="hero-ctas">
+            <button class="btn lime" data-go="needs">Tell us what your ward needs</button>
+            <button class="btn outline" data-go="map">Explore the map</button>
+          </div>
+        </div>
+        <svg class="hero-map" id="heroMap" aria-hidden="true"></svg>
+        <img class="party-logo" id="partyLogo" alt="" hidden>
+      </div>
+      <div class="hero-stripe"></div>
+    </div>
+    <div class="wrap">
+      <div class="home-grid">
+        <div class="card">
+          <h3>About Yvonne</h3>
+          <p id="heroBio"></p>
+          <div class="contacts" id="contacts"></div>
+        </div>
+        <div class="card">
+          <h3>What we are hearing</h3>
+          <div class="kpis compact" id="homeKpis"></div>
+          <p class="muted small">Live from community reports across Kiambu.</p>
+        </div>
+      </div>
+      <h2 class="sec">Priorities</h2>
+      <div class="prio" id="priorities"></div>
+    </div>
+  </section>
+
+  <!-- MAP VIEW -->
+  <section id="view-map" class="view">
+    <div id="map"></div>
+    <div class="map-panel" id="mapPanel">
+      <div class="seg" id="scopeSeg">
+        <button data-scope="kabete" class="active">Kabete focus</button>
+        <button data-scope="county">All Kiambu</button>
+      </div>
+      <label class="field">Colour wards by
+        <select id="indicator">
+          <option value="voters_2022">Registered voters (2022)</option>
+          <option value="voter_density">Voters per km²</option>
+          <option value="needs">Community needs reported</option>
+          <option value="area_km2">Area (km²)</option>
+        </select>
+      </label>
+      <div id="legend" class="legend"></div>
+      <div class="toggles">
+        <label><input type="checkbox" id="tglConst" checked> Constituency lines</label>
+        <label><input type="checkbox" id="tglNeeds" checked> Needs reports</label>
+        <label><input type="checkbox" id="tglLabels" checked> Ward labels</label>
+      </div>
+    </div>
+    <aside class="info" id="info" hidden>
+      <button class="close" id="infoClose" aria-label="Close">×</button>
+      <div id="infoBody"></div>
+    </aside>
+  </section>
+
+  <!-- DASHBOARD VIEW -->
+  <section id="view-dash" class="view">
+    <div class="wrap">
+      <h2>Campaign dashboard</h2>
+      <p class="muted">The Woman Representative is elected county-wide, so the dashboard shows all of Kiambu with Kabete as the home base.</p>
+      <div class="kpis" id="kpis"></div>
+      <div class="grid">
+        <div class="card"><h3>Registered voters by constituency, 2022</h3><canvas id="chConst"></canvas></div>
+        <div class="card"><h3>Kabete wards: registered voters, 2022</h3><canvas id="chKabete"></canvas></div>
+        <div class="card"><h3>Population growth by sub-county, 2009 to 2019</h3><canvas id="chGrowth"></canvas></div>
+        <div class="card"><h3>Kiambu population by age, 2019</h3><canvas id="chAge"></canvas></div>
+        <div class="card"><h3>Community needs by category</h3><canvas id="chNeeds"></canvas><p class="muted small" id="needsNote"></p></div>
+        <div class="card"><h3>Needs by ward</h3><canvas id="chNeedsWard"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <h3>Ward targeting table (all 60 wards)</h3>
+          <button class="btn ghost" id="exportWards">Download CSV</button>
+        </div>
+        <div class="table-wrap"><table id="wardTable"></table></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- NEEDS VIEW -->
+  <section id="view-needs" class="view">
+    <div class="wrap two">
+      <div>
+        <h2>Skiza: report a community need</h2>
+        <p class="muted">Tap the map to place the location, or use your current location. The ward is filled in automatically.</p>
+        <div id="pickMap"></div>
+        <button class="btn ghost" id="useLoc" type="button">Use my location</button>
+        <span class="muted small" id="pickStatus">No location yet</span>
+      </div>
+      <form id="needForm" class="card form">
+        <label class="field">Category
+          <select name="category" required></select>
+        </label>
+        <label class="field">Short title
+          <input name="title" required maxlength="80" placeholder="e.g. Borehole broken since July">
+        </label>
+        <label class="field">Details
+          <textarea name="details" rows="3" maxlength="600" placeholder="What is the problem, who is affected, since when?"></textarea>
+        </label>
+        <div class="row">
+          <label class="field">Urgency
+            <select name="urgency"><option value="1">Low</option><option value="2" selected>Medium</option><option value="3">High</option></select>
+          </label>
+          <label class="field">People affected (approx.)
+            <input name="affected" type="number" min="0" step="1" placeholder="e.g. 200">
+          </label>
+        </div>
+        <label class="field">Reported by
+          <select name="source">
+            <option>Resident</option><option>Women group</option><option>Youth group</option>
+            <option>Campaign volunteer</option><option>Church or school</option><option>Other</option>
+          </select>
+        </label>
+        <label class="field">Ward
+          <input name="ward" readonly placeholder="Set by the map">
+        </label>
+        <details>
+          <summary>Contact (optional, never shown publicly)</summary>
+          <label class="field">Name <input name="name" maxlength="60"></label>
+          <label class="field">Phone <input name="phone" maxlength="20" inputmode="tel"></label>
+          <label class="check"><input type="checkbox" name="consent"> I agree to be contacted about this report</label>
+        </details>
+        <button class="btn" type="submit">Submit report</button>
+        <p class="small" id="formMsg"></p>
+      </form>
+    </div>
+    <div class="wrap">
+      <div class="card">
+        <div class="card-head">
+          <h3>Reports (<span id="needCount">0</span>)</h3>
+          <div class="btns">
+            <button class="btn ghost" id="expCsv">CSV</button>
+            <button class="btn ghost" id="expGeo">GeoJSON</button>
+            <label class="btn ghost">Import<input type="file" id="impGeo" accept=".geojson,.json" hidden></label>
+          </div>
+        </div>
+        <div class="table-wrap"><table id="needTable"></table></div>
+        <p class="muted small" id="syncNote"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT VIEW -->
+  <section id="view-about" class="view">
+    <div class="wrap narrow">
+      <h2>Data and method</h2>
+      <p>Boundaries are the IEBC county, constituency and ward polygons (60 wards in Kiambu), simplified for fast loading. Areas are computed from these polygons. Kahawa Sukari ward (Ruiru) had no polygon in the source, so it is approximated as the part of Ruiru not covered by the other wards.</p>
+      <p>Kabete ward populations come from the 2009 census. The 2019 figures per ward are <strong>estimates</strong>, scaling each ward by Kabete's overall growth (140,427 to 199,653). Replace them when KNBS ward tables are available.</p>
+      <h3>Sources</h3>
+      <ul id="sources"></ul>
+      <h3>Adding your own data</h3>
+      <p>Edit <code>data/stats.json</code> or add properties to <code>data/wards.geojson</code> (for example 2022 Woman Rep results per ward, number of women groups, polling stations). Any numeric ward property can be added to the colour menu in <code>js/config.js</code>.</p>
+    </div>
+  </section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
