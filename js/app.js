@@ -6,7 +6,7 @@
   const HOME = CFG.homeConstituency || "Kabete";
   const STORE_KEY = "kcm_needs_v1";
   // Brand colours (DCP: green, lime, brown)
-  const GREEN = "#0f6b34", LIME = "#8cc63f", BROWN = "#6b4423";
+  const GREEN = "#025a2d", LIME = "#b4f03c", BROWN = "#9b441b";
   const fmt = (n) => (n == null || isNaN(n) ? "n/a" : Number(n).toLocaleString("en-KE"));
   const pct = (a, b) => ((a / b) * 100).toFixed(1) + "%";
   const $ = (s, el = document) => el.querySelector(s);
@@ -15,12 +15,28 @@
 
   // Sequential green ramp, light to dark
   const RAMP = ["#eef6e6", "#d3eabf", "#b2d993", "#8cc263", "#5fa43f", "#3b8430", "#1d5e22"];
-  const CAT_COLORS = ["#0f6b34", "#8cc63f", "#2a8a7c", "#c2410c", "#2563eb", "#be185d", "#4d7c0f", "#7c3aed", "#0e7490", "#b91c1c", "#92400e", "#6b7280"];
+  const CAT_COLORS = ["#025a2d", "#b4f03c", "#2a8a7c", "#c2410c", "#2563eb", "#be185d", "#4d7c0f", "#7c3aed", "#0e7490", "#b91c1c", "#92400e", "#6b7280"];
 
   let DATA = {}, needs = [], remoteNeeds = [];
   let map, pickMap, wardLayer, constLayer, countyLayer, needsLayer, labelLayer, pickMarker;
   let scope = "kabete", indicator = "voters_2022", mapFitted = false, pickFitted = false;
   const charts = {};
+
+  // Simple line icons (24x24, stroke = currentColor)
+  const ICONS = {
+    gavel: '<path d="M14 4l6 6M11 7l6 6M12.5 5.5l-4 4 6 6 4-4M10 12l-7 7M4 21h9"/>',
+    eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+    people: '<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M15 14.5c2.8 0 6 1.5 6 4.5"/>',
+    wallet: '<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 14.5h2"/><path d="M6 6l9-3 1.5 3"/>',
+    cap: '<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1.5 3 3 6 3s6-1.5 6-3v-5M22 9v6"/>',
+    sprout: '<path d="M12 21v-9M12 12c0-4-3-6-7-6 0 4 3 6 7 6zM12 14c0-4 3-7 7-7 0 4-3 7-7 7zM7 21h10"/>',
+    chart: '<path d="M4 20V14M9 20V10M14 20V12M19 20V6M3 21h18M4 10l5-4 5 3 6-6"/>',
+    road: '<path d="M8 3L4 21M16 3l4 18M12 4v3M12 10v4M12 17v3"/>',
+    tap: '<path d="M4 8h9a3 3 0 013 3v2M8 8V5h4v3M16 11h4M18 17c0 1.7-1.3 3-3 3s-3-1.3-3-3c0-2 3-5 3-5s3 3 3 5z"/>',
+    inclusion: '<circle cx="6" cy="5" r="2"/><circle cx="18" cy="5" r="2"/><path d="M6 8v6M4 21l2-7 2 7M18 8l-2 5h4l-2-5M17 13v8M19 13v8"/><circle cx="12" cy="17" r="3"/><path d="M12 9v5"/>',
+    elders: '<circle cx="8" cy="5" r="2"/><circle cx="16" cy="5" r="2"/><path d="M8 8v6l-2 7M8 14l2 7M16 8v13M16 12l3 2v7"/>'
+  };
+  const icon = (k, cls = "") => `<svg class="ic ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[k] || ICONS.people}</svg>`;
 
   // ---------- boot ----------
   renderCandidate();
@@ -54,12 +70,13 @@
   // ---------- candidate ----------
   function renderCandidate() {
     const C = CFG.candidate || {};
-    const initials = (C.name || "?").split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+    const full = [C.title, C.name].filter(Boolean).join(" ");
+    const initials = (C.name || "?").split(/\s+/).filter((w) => w).map((w) => w[0]).filter((_, i, a) => i === 0 || i === a.length - 1).join("").toUpperCase();
     ["#brandAvatar", "#heroAvatar"].forEach((sel) => {
       const el = $(sel); el.textContent = initials;
       if (C.photo) {
         const img = new Image();
-        img.alt = C.name || "";
+        img.alt = full;
         img.onload = () => { el.textContent = ""; el.appendChild(img); };
         img.src = C.photo;
       }
@@ -69,17 +86,39 @@
       lg.onload = () => (lg.hidden = false);
       lg.alt = C.party || ""; lg.src = C.partyLogo;
     }
-    $("#brandTitle").textContent = C.name || "";
-    $("#brandSub").textContent = "Kiambu County Woman Rep aspirant" + (C.party ? " · DCP" : "");
-    $("#heroName").textContent = C.name || "";
-    $("#heroRole").textContent = C.role || "";
-    $("#heroParty").textContent = C.party || "";
-    $("#heroSlogan").textContent = C.slogan || "";
-    $("#heroTag").textContent = C.tagline || "";
-    $("#heroBio").textContent = C.bio || "";
-    document.title = (C.name || "Campaign") + " | " + (C.slogan || "Kiambu");
-    $("#priorities").innerHTML = (C.priorities || []).map((p, i) =>
-      `<div class="card prio-card"><div class="num">${i + 1}</div><h3>${esc(p.title)}</h3><p>${esc(p.text)}</p></div>`).join("");
+    const set = (id, v) => { const el = $(id); if (el) el.textContent = v || ""; };
+    set("#brandTitle", [C.title, C.shortName || C.name].filter(Boolean).join(" ") + (C.name && C.shortName ? " " + C.name.split(" ").slice(-1)[0] : ""));
+    set("#brandSub", `MP aspirant, ${HOME}` + (C.party ? " · DCP" : ""));
+    set("#heroTitle", C.title); set("#mfTitle", C.title);
+    set("#heroName", C.name); set("#mfName", C.name);
+    set("#heroRole", C.role);
+    set("#heroParty", C.party); set("#heroSlogan", C.slogan);
+    set("#heroTag", C.tagline);
+    set("#heroBio", C.bio); set("#mfBio", C.bio);
+    const q = C.quote || [];
+    set("#quote1", q[0]); set("#quote2", q[1]); set("#mfQ1", q[0]); set("#mfQ2", q[1]);
+    set("#campaignYear", C.campaign); set("#campaignMotto", C.motto);
+    document.title = `${full} | ${C.campaign || HOME}`;
+
+    $("#pillars").innerHTML = (C.pillars || []).map((p, i) =>
+      `<div class="pillar"><span class="pill-ic ${i % 2 ? "brown" : ""}">${icon(p.icon)}</span><b>${esc(p.title)}</b></div>`).join("");
+
+    $("#pledgeTrack").innerHTML = (C.pledges || []).map((p, i) => `
+      <article class="slide pledge ${i % 2 ? "brown" : ""}">
+        <div class="pledge-num"><span>${i + 1}</span>${icon(p.icon)}</div>
+        <div class="pledge-body">
+          <p class="pledge-text">${esc(p.text)}</p>
+          <div class="pledge-meta" data-cat="${esc(p.category)}"></div>
+          <button class="btn ghost" data-report="${esc(p.category)}">Report a need on this</button>
+        </div>
+      </article>`).join("");
+    $("#actionTrack").innerHTML = (C.actions || []).map((a, i) => `
+      <article class="slide action">
+        <div class="action-num">${i + 1}</div>
+        <h3>${esc(a.title)}</h3>
+        <p>${esc(a.text)}</p>
+      </article>`).join("");
+
     const k = C.contact || {}, links = [];
     if (k.whatsapp) links.push(["WhatsApp", "https://wa.me/" + k.whatsapp.replace(/\D/g, "")]);
     if (k.phone) links.push(["Call", "tel:" + k.phone]);
@@ -89,36 +128,92 @@
     if (k.tiktok) links.push(["TikTok", k.tiktok]);
     if (k.linkedin) links.push(["LinkedIn", k.linkedin]);
     $("#contacts").innerHTML = links.map(([l, u]) => `<a class="btn ghost" href="${esc(u)}" target="_blank" rel="noopener">${l}</a>`).join("");
+
     $$("[data-go]").forEach((b) => b.addEventListener("click", () => $(`#tabs button[data-view="${b.dataset.go}"]`).click()));
+    $$('#view-manifesto a[href^="#"]').forEach((a) => a.addEventListener("click", (e) => {
+      e.preventDefault(); const t = $(a.getAttribute("href")); if (t) t.scrollIntoView({ behavior: "smooth", block: "start" });
+    }));
+    $$("[data-report]").forEach((b) => b.addEventListener("click", () => {
+      $('#tabs button[data-view="needs"]').click();
+      $("#needForm [name=category]").value = b.dataset.report;
+    }));
+    $$(".slider").forEach(initSlider);
   }
 
-  // Kiambu ward silhouette for the home page, Kabete in lime
+  // Swipeable slider: scroll-snap track, arrows, dots, optional autoplay
+  function initSlider(root) {
+    const track = $(".track", root), slides = $$(".slide", track), dots = $(".dots", root);
+    if (!slides.length) return;
+    const perView = () => { const w = slides[0].getBoundingClientRect().width; return w ? Math.max(1, Math.round(track.clientWidth / w)) : 1; };
+    const pages = () => Math.max(1, slides.length - perView() + 1);
+    const current = () => { const w = slides[0].getBoundingClientRect().width + (parseFloat(getComputedStyle(track).columnGap) || 0); return w ? Math.round(track.scrollLeft / w) : 0; };
+    const go = (i) => {
+      const n = pages(); i = ((i % n) + n) % n;
+      track.scrollTo({ left: slides[i].offsetLeft - track.offsetLeft, behavior: "smooth" });
+    };
+    const drawDots = () => {
+      const n = pages(), c = Math.min(current(), n - 1);
+      dots.innerHTML = Array.from({ length: n }, (_, i) => `<button aria-label="Slide ${i + 1}" class="${i === c ? "on" : ""}"></button>`).join("");
+      $$("button", dots).forEach((d, i) => d.addEventListener("click", () => { stop(); go(i); }));
+    };
+    $(".prev", root).addEventListener("click", () => { stop(); go(current() - 1); });
+    $(".next", root).addEventListener("click", () => { stop(); go(current() + 1); });
+    let t; track.addEventListener("scroll", () => { clearTimeout(t); t = setTimeout(drawDots, 80); });
+    window.addEventListener("resize", drawDots);
+    let timer = null;
+    const stop = () => { clearInterval(timer); timer = null; };
+    const ms = +root.dataset.autoplay;
+    if (ms) {
+      timer = setInterval(() => { if (root.offsetParent) go(current() + 1); }, ms);
+      ["pointerdown", "touchstart", "wheel"].forEach((ev) => track.addEventListener(ev, stop, { passive: true }));
+    }
+    drawDots();
+    root._redraw = drawDots;
+  }
+
+  // Kabete ward map for the home page card
   function drawHeroMap() {
-    const feats = DATA.wards.features;
+    const feats = DATA.wards.features.filter((f) => f.properties.constituency === HOME);
     let x0 = 180, x1 = -180, y0 = 90, y1 = -90;
     const rings = (f) => (f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.coordinates).map((p) => p[0]);
     feats.forEach((f) => rings(f).forEach((r) => r.forEach(([x, y]) => { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); })));
     const W = 400, k = W / (x1 - x0), H = (y1 - y0) * k;
-    const path = (f) => rings(f).map((r) => "M" + r.map(([x, y]) => `${((x - x0) * k).toFixed(1)},${((y1 - y) * k).toFixed(1)}`).join("L") + "Z").join("");
+    const P = ([x, y]) => [((x - x0) * k), ((y1 - y) * k)];
+    const path = (f) => rings(f).map((r) => "M" + r.map((c) => P(c).map((v) => v.toFixed(1)).join(",")).join("L") + "Z").join("");
     const svg = $("#heroMap");
-    svg.setAttribute("viewBox", `-4 -4 ${W + 8} ${H + 8}`);
-    svg.innerHTML = feats.map((f) => {
-      const home = f.properties.constituency === HOME;
-      return `<path d="${path(f)}" fill="${home ? LIME : "rgba(255,255,255,.10)"}" stroke="${home ? "#0a4a24" : "rgba(255,255,255,.45)"}" stroke-width="${home ? 1.2 : 0.7}"><title>${esc(f.properties.name)}</title></path>`;
-    }).join("");
+    svg.setAttribute("viewBox", `-6 -6 ${W + 12} ${H + 12}`);
+    const nc = needCountByWard();
+    svg.innerHTML = feats.map((f, i) => `<path class="mm-ward" data-code="${f.properties.code}" d="${path(f)}" fill="${["#025a2d", "#1f7a3e", "#3a8f4f", "#0b4a26", "#2c8446"][i % 5]}" stroke="#b4f03c" stroke-width="2"><title>${esc(f.properties.name)}: ${fmt(f.properties.voters_2022)} voters</title></path>`).join("") +
+      feats.map((f) => {
+        const lp = labelPoint(f) || [0, 0], [x, y] = P([lp[1], lp[0]]);
+        return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" class="mm-label">${esc(f.properties.name)}</text><text x="${x.toFixed(1)}" y="${(y + 16).toFixed(1)}" text-anchor="middle" class="mm-sub">${nc[f.properties.code] || 0} needs</text>`;
+      }).join("");
+    $$(".mm-ward", svg).forEach((p) => p.addEventListener("click", () => {
+      $('#tabs button[data-view="dash"]').click();
+      setTimeout(() => select({ level: "ward", code: p.dataset.code }), 120);
+    }));
   }
 
   function renderHomeKpis() {
-    const n = allNeeds();
+    const n = allNeeds().filter((x) => x.constituency === HOME);
     const cat = {}; n.forEach((x) => (cat[x.category] = (cat[x.category] || 0) + 1));
     const top = Object.entries(cat).sort((a, b) => b[1] - a[1])[0];
+    const kab = DATA.cons ? DATA.cons.features.find((c) => c.properties.name === HOME).properties : null;
     $("#homeKpis").innerHTML = [
+      [kab ? fmt(kab.voters_2022) : "", "Registered voters (2022)"],
       [fmt(n.length), "Needs reported"],
-      [fmt(new Set(n.map((x) => x.wardCode)).size) + " / 60", "Wards heard from"],
-      [top ? esc(top[0]) : "None yet", "Top concern"],
-      [fmt(n.filter((x) => x.urgency === 3).length), "Marked urgent"]
+      [fmt(new Set(n.map((x) => x.wardCode)).size) + " / 5", "Wards heard from"],
+      [top ? esc(top[0]) : "None yet", "Top concern"]
     ].map(([v, l]) => `<div class="kpi"><div class="v">${v}</div><div class="l">${l}</div></div>`).join("");
+    // live counts on pledge cards
+    const all = allNeeds();
+    $$(".pledge-meta").forEach((m) => {
+      const c = all.filter((x) => x.category === m.dataset.cat).length;
+      m.textContent = c ? `${c} report${c === 1 ? "" : "s"} from residents so far` : "No reports yet";
+    });
+    if ($("#heroMap") && DATA.wards) drawHeroMap();
   }
+
 
   // ---------- tabs ----------
   function initTabs() {
@@ -130,6 +225,7 @@
         pickMap.invalidateSize();
         if (!pickFitted) { pickMap.fitBounds(L.geoJSON(DATA.cons.features.filter((f) => f.properties.name === HOME)).getBounds()); pickFitted = true; }
       }, 50);
+      if (b.dataset.view === "manifesto") setTimeout(() => $$(".slider").forEach((s) => s._redraw && s._redraw()), 60);
       if (b.dataset.view === "dash") setTimeout(() => { initDash(); dashMap.invalidateSize(); if (!dashFitted) { dashFitted = true; dashFit(); } renderDashboard(); }, 50);
       history.replaceState(null, "", "#" + b.dataset.view);
     }));
@@ -171,7 +267,7 @@
       interactive: false
     }).addTo(map);
     wardLayer = L.geoJSON(DATA.wards, { style: wardStyle, onEachFeature: (f, l) => {
-      l.on({ click: () => showWard(f, l), mouseover: () => l.setStyle({ weight: 3, color: "#8cc63f" }), mouseout: () => wardLayer.resetStyle(l) });
+      l.on({ click: () => showWard(f, l), mouseover: () => l.setStyle({ weight: 3, color: "#b4f03c" }), mouseout: () => wardLayer.resetStyle(l) });
     } }).addTo(map);
     constLayer = L.geoJSON(DATA.cons, {
       style: (f) => ({ color: f.properties.name === HOME ? BROWN : "#1e2a1a", weight: f.properties.name === HOME ? 4 : 1.4, fill: false }),
@@ -331,7 +427,7 @@
   function initNeeds() {
     pickMap = L.map("pickMap");
     addBase(pickMap);
-    L.geoJSON(DATA.wards, { style: (f) => ({ color: "#0f6b34", weight: f.properties.constituency === HOME ? 1.5 : 0.6, fillOpacity: f.properties.constituency === HOME ? 0.08 : 0.02 }), interactive: false }).addTo(pickMap);
+    L.geoJSON(DATA.wards, { style: (f) => ({ color: "#025a2d", weight: f.properties.constituency === HOME ? 1.5 : 0.6, fillOpacity: f.properties.constituency === HOME ? 0.08 : 0.02 }), interactive: false }).addTo(pickMap);
     pickMap.setView([-1.22, 36.7], 13);
     pickMap.on("click", (e) => setPick(e.latlng.lat, e.latlng.lng));
 
@@ -456,7 +552,7 @@
 
   // ---------- dashboard: map on the left, details on the right ----------
   // sel: { level: "county" } | { level: "cons", name } | { level: "ward", code }
-  let dashMap, dashWards, dashCons, dashFitted = false, sel = { level: "county" };
+  let dashMap, dashWards, dashCons, dashFitted = false, sel = { level: "cons", name: HOME };
   const consOf = (name) => DATA.cons.features.find((c) => c.properties.name === name);
   const wardOf = (code) => DATA.wards.features.find((w) => w.properties.code === code);
 
@@ -524,7 +620,7 @@
     // map highlight
     dashWards.setStyle((f) => {
       const p = f.properties, on = sel.level === "ward" && p.code === sel.code;
-      return on ? { color: "#0a4a24", weight: 4, fillOpacity: 0.9 } : { color: "#ffffff", weight: 0.8, fillOpacity: 0.75 };
+      return on ? { color: "#023419", weight: 4, fillOpacity: 0.9 } : { color: "#ffffff", weight: 0.8, fillOpacity: 0.75 };
     });
     dashWards.eachLayer((l) => { if (sel.level === "ward" && l.feature.properties.code === sel.code) l.bringToFront(); });
     dashCons.setStyle(consStyle);

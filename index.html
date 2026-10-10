@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Yvonne Waweru | Skiza Kiambu</title>
-<meta name="description" content="Yvonne Waweru, DCP aspirant for Kiambu County Woman Representative. Map, dashboards and community needs reporting for Kiambu, starting from Kabete.">
-<meta property="og:title" content="Yvonne Waweru for Kiambu Woman Rep">
+<title>Wakili Yvonne Waweru | Kabete 2027</title>
+<meta name="description" content="Wakili Yvonne Wanjiku Waweru, DCP aspirant for Member of Parliament, Kabete Constituency. Manifesto, ward map, dashboards and community needs reporting.">
+<meta property="og:title" content="Wakili Yvonne Waweru for Kabete MP, 2027">
 <meta property="og:description" content="Skiza Wakenya. Tell us what your ward needs.">
 <meta property="og:image" content="assets/yvonne.jpg">
-<meta name="theme-color" content="#0f6b34">
+<meta name="theme-color" content="#025a2d">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=Poppins:wght@600;800&display=swap">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -20,11 +20,12 @@
     <div class="avatar sm" id="brandAvatar"></div>
     <div>
       <div class="brand-title" id="brandTitle">Yvonne Waweru</div>
-      <div class="brand-sub" id="brandSub">Kiambu County Woman Rep aspirant · DCP</div>
+      <div class="brand-sub" id="brandSub">MP aspirant, Kabete · DCP</div>
     </div>
   </div>
   <nav class="tabs" id="tabs">
     <button data-view="home" class="active">Yvonne</button>
+    <button data-view="manifesto">Manifesto</button>
     <button data-view="map">Map</button>
     <button data-view="dash">Dashboard</button>
     <button data-view="needs">Skiza</button>
@@ -37,38 +38,108 @@
   <section id="view-home" class="view active">
     <div class="hero">
       <div class="hero-inner">
-        <div class="avatar lg" id="heroAvatar"></div>
         <div class="hero-text">
-          <div class="pill" id="heroParty"></div>
+          <img class="party-logo" id="partyLogo" alt="" hidden>
+          <div class="wakili" id="heroTitle"></div>
           <h1 id="heroName"></h1>
           <p class="hero-role" id="heroRole"></p>
-          <p class="slogan"><span id="heroSlogan"></span></p>
-          <p class="hero-tag" id="heroTag"></p>
+          <p class="tagline-band"><span id="heroTag"></span></p>
           <div class="hero-ctas">
-            <button class="btn lime" data-go="needs">Tell us what your ward needs</button>
-            <button class="btn outline" data-go="map">Explore the map</button>
+            <button class="btn lime" data-go="manifesto">Read the manifesto</button>
+            <button class="btn outline" data-go="needs">Tell us what your ward needs</button>
           </div>
         </div>
-        <svg class="hero-map" id="heroMap" aria-hidden="true"></svg>
-        <img class="party-logo" id="partyLogo" alt="" hidden>
+        <div class="hero-photo" id="heroAvatar"></div>
       </div>
-      <div class="hero-stripe"></div>
+    </div>
+    <div class="pillars-band">
+      <div class="pillars" id="pillars"></div>
+    </div>
+    <div class="quote-band">
+      <p class="q1" id="quote1"></p>
+      <p class="q2" id="quote2"></p>
+      <p class="campaign"><b id="campaignYear"></b> <i id="campaignMotto"></i></p>
     </div>
     <div class="wrap">
       <div class="home-grid">
         <div class="card">
-          <h3>About Yvonne</h3>
+          <h3>My pledge to all Kabetians</h3>
           <p id="heroBio"></p>
+          <p class="small muted"><span id="heroParty"></span> · <span id="heroSlogan"></span></p>
           <div class="contacts" id="contacts"></div>
         </div>
         <div class="card">
-          <h3>What we are hearing</h3>
+          <h3>What Kabete is telling us</h3>
           <div class="kpis compact" id="homeKpis"></div>
-          <p class="muted small">Live from community reports across Kiambu.</p>
+          <p class="muted small">Live from Skiza community reports.</p>
+          <svg class="mini-map" id="heroMap" aria-hidden="true"></svg>
         </div>
       </div>
-      <h2 class="sec">Priorities</h2>
-      <div class="prio" id="priorities"></div>
+    </div>
+  </section>
+
+  <!-- MANIFESTO VIEW -->
+  <section id="view-manifesto" class="view">
+    <div class="slider hero-slider" id="heroSlider" data-autoplay="6500">
+      <div class="track">
+        <div class="slide s-green">
+          <div class="slide-inner">
+            <div class="kicker">Manifesto</div>
+            <h2 class="display">My pledge<br><span class="lime-band">to all Kabetians</span></h2>
+            <p class="lead" id="mfBio"></p>
+          </div>
+        </div>
+        <div class="slide s-dark">
+          <div class="slide-inner center">
+            <h2 class="display white" id="mfQ1"></h2>
+            <h2 class="display neon" id="mfQ2"></h2>
+            <div class="sig"><span class="wakili sm" id="mfTitle"></span><b id="mfName"></b></div>
+          </div>
+        </div>
+        <div class="slide s-green">
+          <div class="slide-inner">
+            <h2 class="display"><span class="neon big8">8</span> pledges<br><small>for a brighter Kabete</small></h2>
+            <p class="lead">From every child in school to every elder ageing with dignity.</p>
+            <a class="btn lime" href="#pledges">See the 8 pledges</a>
+          </div>
+        </div>
+        <div class="slide s-brown">
+          <div class="slide-inner">
+            <h2 class="display">Operationalizing<br><span class="neon">the pledge</span></h2>
+            <p class="lead">Turning promises into action with systems that put information, opportunities and resources in the hands of Kabetians.</p>
+            <a class="btn lime" href="#actions">How it will be done</a>
+          </div>
+        </div>
+      </div>
+      <button class="nav prev" aria-label="Previous">‹</button>
+      <button class="nav next" aria-label="Next">›</button>
+      <div class="dots"></div>
+    </div>
+
+    <div class="wrap">
+      <h2 class="sec-title" id="pledges"><span class="neon-num">8</span> Pledges for a brighter Kabete</h2>
+      <p class="muted">Swipe through the pledges. Each one links to Skiza so residents can report what is needed in their ward.</p>
+      <div class="slider card-slider" id="pledgeSlider">
+        <div class="track" id="pledgeTrack"></div>
+        <button class="nav prev" aria-label="Previous">‹</button>
+        <button class="nav next" aria-label="Next">›</button>
+        <div class="dots"></div>
+      </div>
+
+      <h2 class="sec-title" id="actions">Operationalizing the pledge</h2>
+      <p class="muted">Turning promises into action.</p>
+      <div class="slider card-slider" id="actionSlider">
+        <div class="track" id="actionTrack"></div>
+        <button class="nav prev" aria-label="Previous">‹</button>
+        <button class="nav next" aria-label="Next">›</button>
+        <div class="dots"></div>
+      </div>
+
+      <div class="card hub-note">
+        <h3>This platform is where it starts</h3>
+        <p>The Kabete Information & Data Hub and meaningful public participation begin here: a public map of Kabete's five wards, open figures, and Skiza, where every resident can report what their community needs.</p>
+        <div class="hero-ctas"><button class="btn" data-go="needs">Report a need</button><button class="btn ghost" data-go="dash">Open the dashboard</button></div>
+      </div>
     </div>
   </section>
 
@@ -114,7 +185,7 @@
         </label>
         <div class="crumbs" id="dashCrumbs"></div>
         <h2 id="dashTitle">Kiambu County</h2>
-        <p class="muted small">Tap any ward on the map to see its figures. The Woman Representative is elected county-wide.</p>
+        <p class="muted small">Tap any ward on the map to see its figures. Kabete has five wards; use the breadcrumb to compare with the rest of Kiambu.</p>
         <div class="kpis compact3" id="dashKpis"></div>
         <div class="card">
           <h3 id="cmpTitle"></h3>
@@ -207,7 +278,7 @@
       <h3>Sources</h3>
       <ul id="sources"></ul>
       <h3>Adding your own data</h3>
-      <p>Edit <code>data/stats.json</code> or add properties to <code>data/wards.geojson</code> (for example 2022 Woman Rep results per ward, number of women groups, polling stations). Any numeric ward property can be added to the colour menu in <code>js/config.js</code>.</p>
+      <p>Edit <code>data/stats.json</code> or add properties to <code>data/wards.geojson</code> (for example 2022 MP results per ward, polling stations, youth or women groups). Any numeric ward property can be added to the colour menu in <code>js/config.js</code>.</p>
     </div>
   </section>
 </main>

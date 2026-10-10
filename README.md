@@ -1,14 +1,15 @@
-# Yvonne Waweru: Skiza Kiambu
+# Wakili Yvonne Wanjiku Waweru: Kabete 2027
 
-Campaign map, dashboards and community needs tool for Yvonne Waweru, DCP aspirant for Kiambu County Woman Representative, with Kabete Constituency as her home base. Styled in DCP colours (green, lime, brown and white) around the party slogan *Skiza Wakenya*.
+Campaign website for Wakili Yvonne Wanjiku Waweru, DCP aspirant for Member of Parliament, Kabete Constituency (Kabete 2027: *Pamoja, Tujenge Kabete Bora!*). Styled in the campaign's DCP colours (deep green, neon lime, brown and white) around the party slogan *Skiza Wakenya*.
 
-It has five parts:
+It has six parts:
 
-1. **Yvonne (home page)**: photo, party, slogan, bio, priorities, contact links and live counts of what residents are reporting.
-2. **Map**: Kiambu County boundary, its 12 constituencies and 60 wards, with Kabete highlighted. Wards can be coloured by registered voters, voters per km², area, or the number of community needs reported. Tap a ward for its figures.
-3. **Dashboard**: an interactive map on the left and a live panel on the right. Tap any ward (or pick one from the Jump to list) and the panel updates with its voters, share, rank, area, density, population and the needs residents have reported there. Breadcrumbs move back up to the constituency or the whole county.
-4. **Skiza (community needs)**: a citizen science form. Anyone can drop a pin, choose a category (water, roads, health, women economic empowerment, and so on), describe the need and rate its urgency. The ward is detected automatically. Reports appear on the map and in the dashboard and can be exported as CSV or GeoJSON.
-5. **Data**: sources and method notes.
+1. **Yvonne (home page)**: photo, the four roles of an MP she pledges (bold legislation, fearless oversight, proactive representation, pro-Kabete budgeting), her quote, pledge statement, and a live map of what Kabete's five wards are reporting.
+2. **Manifesto**: a swipeable slider of campaign messages, the 8 pledges for a brighter Kabete (each linked to Skiza), and the 6 steps for operationalizing the pledge.
+3. **Map**: Kiambu County boundary, its 12 constituencies and 60 wards, with Kabete highlighted. Wards can be coloured by registered voters, voters per km², area, or the number of community needs reported. Tap a ward for its figures.
+4. **Dashboard**: an interactive map on the left and a live panel on the right. Tap any ward (or pick one from the Jump to list) and the panel updates with its voters, share, rank, area, density, population and the needs residents have reported there. Breadcrumbs move back up to the constituency or the whole county.
+5. **Skiza (community needs)**: a citizen science form. Anyone can drop a pin, choose a category (water, roads, health, women economic empowerment, and so on), describe the need and rate its urgency. The ward is detected automatically. Reports appear on the map and in the dashboard and can be exported as CSV or GeoJSON.
+6. **Data**: sources and method notes.
 
 It is a static site (HTML, CSS, JavaScript, GeoJSON). No server or build step is needed.
 
@@ -17,7 +18,7 @@ It is a static site (HTML, CSS, JavaScript, GeoJSON). No server or build step is
 1. Create a new repository on GitHub, for example `skiza-kiambu`.
 2. Upload everything in this folder (keep the folder structure). On a phone you can use "Add file > Upload files" on github.com.
 3. In the repository go to **Settings > Pages**. Under "Build and deployment" choose **Deploy from a branch**, branch `main`, folder `/ (root)`, and save.
-4. After a minute the site is live at `https://YOUR-USERNAME.github.io/kabete-campaign-map/`.
+4. After a minute the site is live at `https://YOUR-USERNAME.github.io/skiza-kiambu/`.
 
 To test on a computer before publishing, run `python3 -m http.server` in this folder and open `http://localhost:8000`. Opening `index.html` directly from disk will not load the data files.
 
@@ -33,15 +34,15 @@ Names and phone numbers stay in the sheet and are never shown on the public map.
 
 ## Photo and branding
 
-1. Save Yvonne's photo as `assets/yvonne.jpg` (square, at least 400 x 400 px). It appears in the header, on the home page and in link previews on WhatsApp and Facebook. Her initials show until it is added.
-2. Optionally add the official party logo as `assets/dcp-logo.png`.
-3. In `js/config.js`, update her bio, the priorities (the current ones are drafts) and her WhatsApp, phone, email and social links.
+1. Her photo is `assets/yvonne.jpg` and the party logo is `assets/dcp-logo.png`, both cropped from the campaign poster. Replace them with higher-resolution originals (same file names) when available.
+2. All manifesto text (pillars, 8 pledges, 6 actions, quote, motto) lives in `js/config.js`, so it can be edited without touching the code.
+3. Add her WhatsApp, phone, email and social links in `js/config.js`.
 
 ## Customising
 
 - `js/config.js`: candidate profile, needs categories, shared sheet URL, extra map indicators.
 - `data/stats.json`: county and sub-county figures used in the dashboard.
-- `data/wards.geojson`: one feature per ward. Add your own numeric properties (for example 2022 Woman Rep votes, polling stations, women groups) and list them under `extraIndicators` in `config.js` to colour the map by them.
+- `data/wards.geojson`: one feature per ward. Add your own numeric properties (for example 2022 MP results, polling stations, youth or women groups) and list them under `extraIndicators` in `config.js` to colour the map by them.
 
 ## Basemaps
 
