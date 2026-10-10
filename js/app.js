@@ -130,7 +130,7 @@
         pickMap.invalidateSize();
         if (!pickFitted) { pickMap.fitBounds(L.geoJSON(DATA.cons.features.filter((f) => f.properties.name === HOME)).getBounds()); pickFitted = true; }
       }, 50);
-      if (b.dataset.view === "dash") renderDashboard();
+      if (b.dataset.view === "dash") setTimeout(() => { initDash(); dashMap.invalidateSize(); if (!dashFitted) { dashFitted = true; dashFit(); } renderDashboard(); }, 50);
       history.replaceState(null, "", "#" + b.dataset.view);
     }));
     const h = location.hash.replace("#", "");
@@ -139,18 +139,29 @@
   }
 
   // ---------- map ----------
-  function baseLayer() {
-    return L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-      maxZoom: 19, subdomains: "abcd",
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
-    });
+  // Free basemaps, no API key needed
+  function baseLayers() {
+    return {
+      "Street map": L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }),
+      "Light grey": L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}", {
+        maxZoom: 16, attribution: "Basemap &copy; Esri"
+      }),
+      "Satellite": L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+        maxZoom: 19, attribution: "Imagery &copy; Esri"
+      })
+    };
+  }
+  function addBase(m) {
+    const b = baseLayers();
+    b["Street map"].addTo(m);
+    L.control.layers(b, null, { position: "topleft" }).addTo(m);
   }
 
   function initMap() {
     map = L.map("map", { zoomControl: true }).setView([-1.22, 36.7], 12);
-    const base = baseLayer().addTo(map);
-    const sat = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { maxZoom: 19, attribution: "Imagery &copy; Esri" });
-    L.control.layers({ "Light map": base, "Satellite": sat }, null, { position: "topleft" }).addTo(map);
+    addBase(map);
     L.control.scale({ imperial: false }).addTo(map);
 
     countyLayer = L.geoJSON(DATA.county, {
@@ -319,7 +330,7 @@
   let picked = null;
   function initNeeds() {
     pickMap = L.map("pickMap");
-    baseLayer().addTo(pickMap);
+    addBase(pickMap);
     L.geoJSON(DATA.wards, { style: (f) => ({ color: "#0f6b34", weight: f.properties.constituency === HOME ? 1.5 : 0.6, fillOpacity: f.properties.constituency === HOME ? 0.08 : 0.02 }), interactive: false }).addTo(pickMap);
     pickMap.setView([-1.22, 36.7], 13);
     pickMap.on("click", (e) => setPick(e.latlng.lat, e.latlng.lng));
@@ -443,93 +454,202 @@
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }
 
-  // ---------- dashboard ----------
-  function renderDashboard() {
-    if (typeof Chart === "undefined") return;
-    const S = DATA.stats, C = S.county, K = S.kabete;
-    const kab = DATA.cons.features.find((f) => f.properties.name === HOME).properties;
-    const n = allNeeds();
-    $("#kpis").innerHTML = [
-      [fmt(C.voters_2022), "Registered voters in Kiambu (2022)"],
-      [fmt(kab.voters_2022), `${HOME} voters, ${pct(kab.voters_2022, C.voters_2022)} of county`],
-      [fmt(C.pop_2019), "Kiambu population (2019 census)"],
-      [pct(C.female_2019, C.pop_2019), `Female share of Kiambu (${fmt(C.female_2019)})`],
-      [fmt(K.pop_2019), `${HOME} population (2019 census)`],
-      [fmt(n.length), "Community needs reported"]
-    ].map(([v, l]) => `<div class="kpi"><div class="v">${v}</div><div class="l">${esc(l)}</div></div>`).join("");
+  // ---------- dashboard: map on the left, details on the right ----------
+  // sel: { level: "county" } | { level: "cons", name } | { level: "ward", code }
+  let dashMap, dashWards, dashCons, dashFitted = false, sel = { level: "county" };
+  const consOf = (name) => DATA.cons.features.find((c) => c.properties.name === name);
+  const wardOf = (code) => DATA.wards.features.find((w) => w.properties.code === code);
 
+  function initDash() {
+    if (dashMap) return;
+    dashMap = L.map("dashMap", { zoomControl: true }).setView([-1.05, 36.85], 10);
+    addBase(dashMap);
+    const vals = DATA.wards.features.map((f) => f.properties.voters_2022);
+    const lo = Math.min(...vals), hi = Math.max(...vals);
+    const col = (v) => RAMP[Math.min(RAMP.length - 1, Math.floor(((v - lo) / (hi - lo)) * RAMP.length))];
+    dashWards = L.geoJSON(DATA.wards, {
+      style: (f) => ({ color: "#ffffff", weight: 0.8, fillColor: col(f.properties.voters_2022), fillOpacity: 0.75 }),
+      onEachFeature: (f, l) => {
+        l.bindTooltip(`<b>${esc(f.properties.name)}</b><br>${fmt(f.properties.voters_2022)} voters`, { sticky: true });
+        l.on("click", () => select({ level: "ward", code: f.properties.code }, true));
+      }
+    }).addTo(dashMap);
+    dashCons = L.geoJSON(DATA.cons, { style: consStyle, interactive: false }).addTo(dashMap);
+    $("#dashLegend").innerHTML = `<div class="small">Registered voters per ward, 2022</div>
+      <div class="bar">${RAMP.map((c) => `<span style="background:${c}"></span>`).join("")}</div>
+      <div class="ends"><span>${fmt(lo)}</span><span>${fmt(hi)}</span></div>`;
+
+    // jump-to selector
+    const groups = DATA.cons.features.map((c) => c.properties.name).sort();
+    $("#dashSelect").innerHTML = `<option value="county">All of Kiambu County</option>` +
+      groups.map((g) => `<optgroup label="${esc(g)}"><option value="cons:${esc(g)}">${esc(g)} constituency (all wards)</option>` +
+        DATA.wards.features.filter((w) => w.properties.constituency === g).sort((a, b) => a.properties.name.localeCompare(b.properties.name))
+          .map((w) => `<option value="ward:${w.properties.code}">${esc(w.properties.name)} ward</option>`).join("") + `</optgroup>`).join("");
+    $("#dashSelect").addEventListener("change", (e) => {
+      const v = e.target.value;
+      if (v === "county") select({ level: "county" });
+      else if (v.startsWith("cons:")) select({ level: "cons", name: v.slice(5) });
+      else select({ level: "ward", code: v.slice(5) });
+    });
+  }
+
+  function consStyle(f) {
+    const n = f.properties.name;
+    const active = (sel.level === "cons" && sel.name === n) || (sel.level === "ward" && wardOf(sel.code).properties.constituency === n);
+    return { fill: false, color: active ? BROWN : (n === HOME ? BROWN : "#1e2a1a"), weight: active ? 4 : (n === HOME ? 2.5 : 1.2), dashArray: n === HOME && !active ? "6 4" : null };
+  }
+
+  function dashFit() {
+    let b;
+    if (sel.level === "ward") b = L.geoJSON(wardOf(sel.code)).getBounds();
+    else if (sel.level === "cons") b = L.geoJSON(consOf(sel.name)).getBounds();
+    else b = L.geoJSON(DATA.cons).getBounds();
+    dashMap.flyToBounds(b, { padding: sel.level === "ward" ? [60, 60] : [24, 24], duration: 0.6, maxZoom: sel.level === "ward" ? 13 : 12 });
+  }
+
+  function select(s, fromMap) {
+    sel = s;
+    if (fromMap && window.innerWidth <= 760) setTimeout(() => $("#dashCrumbs").scrollIntoView({ behavior: "smooth", block: "start" }), 700);
+    $("#dashSelect").value = s.level === "county" ? "county" : s.level === "cons" ? "cons:" + s.name : "ward:" + s.code;
+    renderDashboard();
+    dashFit();
+  }
+
+  function renderDashboard() {
+    if (typeof Chart === "undefined" || !dashMap) return;
     Chart.defaults.font.family = "Inter, system-ui, sans-serif";
     Chart.defaults.color = "#5f6b5a";
-    const grid = { color: "#e9efe4" };
+    const S = DATA.stats, C = S.county, grid = { color: "#e9efe4" };
 
-    const cons = DATA.cons.features.map((f) => f.properties).sort((a, b) => b.voters_2022 - a.voters_2022);
-    mk("chConst", { type: "bar",
-      data: { labels: cons.map((c) => c.name), datasets: [{ data: cons.map((c) => c.voters_2022), backgroundColor: cons.map((c) => c.name === HOME ? BROWN : "#3f9a4f"), borderRadius: 4 }] },
-      options: { indexAxis: "y", plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => fmt(c.raw) + " voters" } } }, scales: { x: { grid }, y: { grid: { display: false }, ticks: { autoSkip: false } } } } });
+    // map highlight
+    dashWards.setStyle((f) => {
+      const p = f.properties, on = sel.level === "ward" && p.code === sel.code;
+      return on ? { color: "#0a4a24", weight: 4, fillOpacity: 0.9 } : { color: "#ffffff", weight: 0.8, fillOpacity: 0.75 };
+    });
+    dashWards.eachLayer((l) => { if (sel.level === "ward" && l.feature.properties.code === sel.code) l.bringToFront(); });
+    dashCons.setStyle(consStyle);
 
-    const kw = DATA.wards.features.filter((f) => f.properties.constituency === HOME).map((f) => f.properties).sort((a, b) => b.voters_2022 - a.voters_2022);
-    mk("chKabete", { type: "bar",
-      data: { labels: kw.map((w) => w.name), datasets: [
-        { label: "Registered voters 2022", data: kw.map((w) => w.voters_2022), backgroundColor: "#0f6b34", borderRadius: 4 },
-        { label: "Population 2019 (est.)", data: kw.map((w) => w.pop_2019_est), backgroundColor: "#b9dca0", borderRadius: 4 }] },
-      options: { plugins: { tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${fmt(c.raw)}` } } }, scales: { y: { grid }, x: { grid: { display: false } } } } });
+    // what is selected
+    const wardsAll = DATA.wards.features.map((f) => f.properties);
+    let title, crumbs, kpis, compare, scopeNeeds, extra;
+    const n = allNeeds();
+    const crumb = (label, s) => `<a href="#" data-sel='${esc(JSON.stringify(s))}'>${esc(label)}</a>`;
 
-    const sc = S.subcounties.slice().sort((a, b) => b[2] - a[2]);
-    mk("chGrowth", { type: "bar",
-      data: { labels: sc.map((s) => s[0]), datasets: [
-        { label: "2009", data: sc.map((s) => s[1]), backgroundColor: "#b9dca0", borderRadius: 3 },
-        { label: "2019", data: sc.map((s) => s[2]), backgroundColor: sc.map((s) => s[0] === HOME ? BROWN : GREEN), borderRadius: 3 }] },
-      options: { plugins: { tooltip: { callbacks: { afterBody: (items) => { const s = sc[items[0].dataIndex]; return `Growth: ${(((s[2] - s[1]) / s[1]) * 100).toFixed(0)}%`; } } } },
-        scales: { y: { grid }, x: { grid: { display: false }, ticks: { maxRotation: 60, minRotation: 45 } } } } });
+    if (sel.level === "county") {
+      title = "Kiambu County";
+      crumbs = `<span>Kiambu</span>`;
+      const kab = consOf(HOME).properties;
+      kpis = [
+        [fmt(C.voters_2022), "Registered voters, 2022"],
+        [fmt(C.pop_2019), "Population, 2019 census"],
+        [pct(C.female_2019, C.pop_2019), "Female share of population"],
+        [`${C.constituencies} / ${C.wards}`, "Constituencies / wards"],
+        [pct(kab.voters_2022, C.voters_2022), `${HOME}'s share of county voters`],
+        [fmt(n.length), "Community needs reported"]
+      ];
+      const cons = DATA.cons.features.map((f) => f.properties).sort((a, b) => b.voters_2022 - a.voters_2022);
+      compare = { title: "Registered voters by constituency", hint: "Tap a bar to open that constituency",
+        labels: cons.map((c) => c.name), values: cons.map((c) => c.voters_2022),
+        colors: cons.map((c) => (c.name === HOME ? BROWN : "#3f9a4f")),
+        onPick: (i) => select({ level: "cons", name: cons[i].name }) };
+      scopeNeeds = n;
+      extra = "county";
+    } else if (sel.level === "cons") {
+      const c = consOf(sel.name).properties;
+      const ws = wardsAll.filter((w) => w.constituency === c.name).sort((a, b) => b.voters_2022 - a.voters_2022);
+      const sub = S.subcounties.find((x) => x[0] === c.name);
+      const rank = DATA.cons.features.map((f) => f.properties.voters_2022).sort((a, b) => b - a).indexOf(c.voters_2022) + 1;
+      title = `${c.name} constituency`;
+      crumbs = `${crumb("Kiambu", { level: "county" })} › <span>${esc(c.name)}</span>`;
+      scopeNeeds = n.filter((x) => x.constituency === c.name);
+      kpis = [
+        [fmt(c.voters_2022), "Registered voters, 2022"],
+        [pct(c.voters_2022, C.voters_2022), "Share of Kiambu voters"],
+        [`#${rank} of 12`, "Rank by voters"],
+        [c.area_km2 + " km²", `${ws.length} wards, ${fmt(c.voter_density)} voters per km²`],
+        sub ? [fmt(sub[2]), `Population 2019 (+${Math.round((sub[2] - sub[1]) / sub[1] * 100)}% since 2009)`] : [fmt(scopeNeeds.length), "Community needs reported"]
+      ];
+      if (sub) kpis.push([fmt(scopeNeeds.length), "Community needs reported"]);
+      compare = { title: `Registered voters by ward in ${c.name}`, hint: "Tap a bar or a ward on the map for details",
+        labels: ws.map((w) => w.name), values: ws.map((w) => w.voters_2022), colors: ws.map(() => GREEN),
+        onPick: (i) => select({ level: "ward", code: ws[i].code }) };
+      extra = "cons";
+    } else {
+      const w = wardOf(sel.code).properties, c = consOf(w.constituency).properties;
+      const ws = wardsAll.filter((x) => x.constituency === w.constituency).sort((a, b) => b.voters_2022 - a.voters_2022);
+      const rankV = wardsAll.slice().sort((a, b) => b.voters_2022 - a.voters_2022).findIndex((x) => x.code === w.code) + 1;
+      title = `${w.name} ward`;
+      crumbs = `${crumb("Kiambu", { level: "county" })} › ${crumb(w.constituency, { level: "cons", name: w.constituency })} › <span>${esc(w.name)}</span>`;
+      scopeNeeds = n.filter((x) => x.wardCode === w.code);
+      kpis = [
+        [fmt(w.voters_2022), "Registered voters, 2022"],
+        [pct(w.voters_2022, c.voters_2022), `Share of ${w.constituency} voters`],
+        [`#${rankV} of 60`, "Rank among Kiambu wards"],
+        [w.area_km2 + " km²", `${fmt(w.voter_density)} voters per km²`],
+        w.pop_2019_est ? [fmt(w.pop_2019_est), `Population 2019 (est.), ${fmt(w.pop_2009)} in 2009`] : [pct(w.voters_2022, C.voters_2022), "Share of Kiambu voters"],
+        [fmt(scopeNeeds.length), "Community needs reported"]
+      ];
+      compare = { title: `${w.name} compared with other wards in ${w.constituency}`, hint: "Tap a bar to switch ward",
+        labels: ws.map((x) => x.name), values: ws.map((x) => x.voters_2022),
+        colors: ws.map((x) => (x.code === w.code ? BROWN : "#b9dca0")),
+        onPick: (i) => select({ level: "ward", code: ws[i].code }) };
+      extra = "ward";
+    }
 
-    const ages = Object.entries(C.age_2019);
-    mk("chAge", { type: "bar",
-      data: { labels: ages.map((a) => a[0]), datasets: [{ data: ages.map((a) => a[1]), backgroundColor: ages.map((a) => ["20-29", "30-39", "40-49"].includes(a[0]) ? "#0f6b34" : "#b9dca0"), borderRadius: 4 }] },
-      options: { plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => fmt(c.raw) + " people" } } }, scales: { y: { grid }, x: { grid: { display: false } } } } });
+    $("#dashCrumbs").innerHTML = crumbs;
+    $("#dashTitle").textContent = title;
+    $("#dashKpis").innerHTML = kpis.map(([v, l]) => `<div class="kpi"><div class="v">${v}</div><div class="l">${esc(l)}</div></div>`).join("");
+    $$("#dashCrumbs [data-sel]").forEach((a) => a.addEventListener("click", (e) => { e.preventDefault(); select(JSON.parse(a.dataset.sel)); }));
 
-    const byCat = {}; n.forEach((x) => (byCat[x.category] = (byCat[x.category] || 0) + 1));
+    // compare chart
+    $("#cmpTitle").textContent = compare.title;
+    $("#cmpHint").textContent = compare.hint;
+    $("#cmpBox").style.height = Math.max(160, compare.labels.length * 30 + 40) + "px";
+    mk("chCompare", { type: "bar",
+      data: { labels: compare.labels, datasets: [{ data: compare.values, backgroundColor: compare.colors, borderRadius: 4 }] },
+      options: { maintainAspectRatio: false, indexAxis: "y",
+        onClick: (e, els) => { if (els.length) compare.onPick(els[0].index); },
+        onHover: (e, els) => (e.native.target.style.cursor = els.length ? "pointer" : "default"),
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => fmt(c.raw) + " voters" } } },
+        scales: { x: { grid }, y: { grid: { display: false }, ticks: { autoSkip: false } } } } });
+
+    // needs for selection
+    const byCat = {}; scopeNeeds.forEach((x) => (byCat[x.category] = (byCat[x.category] || 0) + 1));
     const cats = Object.entries(byCat).sort((a, b) => b[1] - a[1]);
-    mk("chNeeds", { type: "bar",
+    $("#needsEmpty").hidden = cats.length > 0;
+    $("#needsBox").hidden = cats.length === 0;
+    $("#needsBox").style.height = Math.max(120, cats.length * 30 + 40) + "px";
+    if (cats.length) mk("chNeeds", { type: "bar",
       data: { labels: cats.map((c) => c[0]), datasets: [{ data: cats.map((c) => c[1]), backgroundColor: BROWN, borderRadius: 4 }] },
-      options: { indexAxis: "y", plugins: { legend: { display: false } }, scales: { x: { grid, ticks: { precision: 0 } }, y: { grid: { display: false } } } } });
-    $("#needsNote").textContent = n.length ? "" : "No reports yet. Use the Community needs tab to add the first one.";
+      options: { maintainAspectRatio: false, indexAxis: "y", plugins: { legend: { display: false } }, scales: { x: { grid, ticks: { precision: 0 } }, y: { grid: { display: false } } } } });
+    const recent = scopeNeeds.slice().sort((a, b) => (b.urgency - a.urgency) || (new Date(b.date) - new Date(a.date))).slice(0, 5);
+    $("#needsList").innerHTML = recent.map((x) => `<li><span class="urg-${x.urgency}">●</span> <b>${esc(x.title)}</b> <span class="muted small">${esc(x.category)} · ${esc(x.ward)}${x.affected ? " · ~" + fmt(x.affected) + " affected" : ""}</span></li>`).join("");
 
-    const byWard = {}; n.forEach((x) => (byWard[x.ward] = (byWard[x.ward] || 0) + 1));
-    const wards = Object.entries(byWard).sort((a, b) => b[1] - a[1]).slice(0, 12);
-    mk("chNeedsWard", { type: "bar",
-      data: { labels: wards.map((w) => w[0]), datasets: [{ data: wards.map((w) => w[1]), backgroundColor: "#3f9a4f", borderRadius: 4 }] },
-      options: { plugins: { legend: { display: false } }, scales: { y: { grid, ticks: { precision: 0 } }, x: { grid: { display: false } } } } });
-
-    renderWardTable();
+    // context charts
+    $("#ctxCounty").hidden = extra !== "county";
+    if (extra === "county") {
+      const sc = S.subcounties.slice().sort((a, b) => b[2] - a[2]);
+      mk("chGrowth", { type: "bar",
+        data: { labels: sc.map((s) => s[0]), datasets: [
+          { label: "2009", data: sc.map((s) => s[1]), backgroundColor: "#b9dca0", borderRadius: 3 },
+          { label: "2019", data: sc.map((s) => s[2]), backgroundColor: sc.map((s) => (s[0] === HOME ? BROWN : GREEN)), borderRadius: 3 }] },
+        options: { plugins: { tooltip: { callbacks: { afterBody: (items) => { const s = sc[items[0].dataIndex]; return `Growth: ${(((s[2] - s[1]) / s[1]) * 100).toFixed(0)}%`; } } } },
+          scales: { y: { grid }, x: { grid: { display: false }, ticks: { maxRotation: 60, minRotation: 45 } } } } });
+      const ages = Object.entries(C.age_2019);
+      mk("chAge", { type: "bar",
+        data: { labels: ages.map((a) => a[0]), datasets: [{ data: ages.map((a) => a[1]), backgroundColor: ages.map((a) => (["20-29", "30-39", "40-49"].includes(a[0]) ? GREEN : "#b9dca0")), borderRadius: 4 }] },
+        options: { plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => fmt(c.raw) + " people" } } }, scales: { y: { grid }, x: { grid: { display: false } } } } });
+    }
+    $("#reportBtn").onclick = () => {
+      $('#tabs button[data-view="needs"]').click();
+      if (sel.level !== "county") setTimeout(() => { pickFitted = true; pickMap.fitBounds(L.geoJSON(sel.level === "ward" ? wardOf(sel.code) : consOf(sel.name)).getBounds()); }, 150);
+    };
   }
   function mk(id, cfg) {
     if (charts[id]) charts[id].destroy();
-    cfg.data.datasets.forEach((d) => (d.maxBarThickness = 34));
+    cfg.data.datasets.forEach((d) => (d.maxBarThickness = 26));
     cfg.options = Object.assign({ responsive: true, maintainAspectRatio: true, aspectRatio: 1.5 }, cfg.options);
     charts[id] = new Chart(document.getElementById(id), cfg);
-  }
-
-  let sortKey = "voters_2022", sortDir = -1;
-  function wardRows() {
-    const nc = needCountByWard();
-    return DATA.wards.features.map((f) => {
-      const p = f.properties;
-      const cons = DATA.cons.features.find((c) => c.properties.name === p.constituency).properties;
-      return { name: p.name, constituency: p.constituency, voters_2022: p.voters_2022, share: +(p.voters_2022 / DATA.stats.county.voters_2022 * 100).toFixed(2),
-        cons_share: +(p.voters_2022 / cons.voters_2022 * 100).toFixed(1), area_km2: p.area_km2, voter_density: p.voter_density, needs: nc[p.code] || 0 };
-    });
-  }
-  function renderWardTable() {
-    const cols = [["name", "Ward"], ["constituency", "Constituency"], ["voters_2022", "Voters 2022", 1], ["share", "% of county", 1], ["cons_share", "% of constituency", 1], ["area_km2", "Area km²", 1], ["voter_density", "Voters/km²", 1], ["needs", "Needs", 1]];
-    const rows = wardRows().sort((a, b) => (a[sortKey] > b[sortKey] ? 1 : a[sortKey] < b[sortKey] ? -1 : 0) * sortDir);
-    const max = Math.max(...rows.map((r) => r.voters_2022));
-    $("#wardTable").innerHTML = `<thead><tr>${cols.map(([k, l, num]) => `<th data-k="${k}" class="${num ? "num" : ""}">${l}${sortKey === k ? (sortDir > 0 ? " ▲" : " ▼") : ""}</th>`).join("")}</tr></thead><tbody>` +
-      rows.map((r) => `<tr class="${r.constituency === HOME ? "home" : ""}">${cols.map(([k, , num]) => `<td class="${num ? "num" : ""}">${k === "voters_2022" ? fmt(r[k]) + `<span class="bar-cell" style="width:${Math.round(r[k] / max * 50)}px"></span>` : num ? fmt(r[k]) : esc(r[k])}</td>`).join("")}</tr>`).join("") + "</tbody>";
-    $$("#wardTable th").forEach((th) => th.addEventListener("click", () => {
-      if (sortKey === th.dataset.k) sortDir *= -1; else { sortKey = th.dataset.k; sortDir = -1; }
-      renderWardTable();
-    }));
-    $("#exportWards").onclick = () => download("kiambu_wards.csv", toCSV(wardRows(), ["name", "constituency", "voters_2022", "share", "cons_share", "area_km2", "voter_density", "needs"]), "text/csv");
   }
 
   // ---------- about ----------

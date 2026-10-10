@@ -6,7 +6,7 @@ It has five parts:
 
 1. **Yvonne (home page)**: photo, party, slogan, bio, priorities, contact links and live counts of what residents are reporting.
 2. **Map**: Kiambu County boundary, its 12 constituencies and 60 wards, with Kabete highlighted. Wards can be coloured by registered voters, voters per km², area, or the number of community needs reported. Tap a ward for its figures.
-3. **Dashboard**: headline numbers and charts (voters by constituency, Kabete wards, population growth by sub-county, age structure, needs by category and ward) plus a sortable ward targeting table for all 60 wards, downloadable as CSV.
+3. **Dashboard**: an interactive map on the left and a live panel on the right. Tap any ward (or pick one from the Jump to list) and the panel updates with its voters, share, rank, area, density, population and the needs residents have reported there. Breadcrumbs move back up to the constituency or the whole county.
 4. **Skiza (community needs)**: a citizen science form. Anyone can drop a pin, choose a category (water, roads, health, women economic empowerment, and so on), describe the need and rate its urgency. The ward is detected automatically. Reports appear on the map and in the dashboard and can be exported as CSV or GeoJSON.
 5. **Data**: sources and method notes.
 
@@ -14,7 +14,7 @@ It is a static site (HTML, CSS, JavaScript, GeoJSON). No server or build step is
 
 ## Publish on GitHub Pages
 
-1. Create a new repository on GitHub, for example `kabete-campaign-map`.
+1. Create a new repository on GitHub, for example `skiza-kiambu`.
 2. Upload everything in this folder (keep the folder structure). On a phone you can use "Add file > Upload files" on github.com.
 3. In the repository go to **Settings > Pages**. Under "Build and deployment" choose **Deploy from a branch**, branch `main`, folder `/ (root)`, and save.
 4. After a minute the site is live at `https://YOUR-USERNAME.github.io/kabete-campaign-map/`.
@@ -42,6 +42,10 @@ Names and phone numbers stay in the sheet and are never shown on the public map.
 - `js/config.js`: candidate profile, needs categories, shared sheet URL, extra map indicators.
 - `data/stats.json`: county and sub-county figures used in the dashboard.
 - `data/wards.geojson`: one feature per ward. Add your own numeric properties (for example 2022 Woman Rep votes, polling stations, women groups) and list them under `extraIndicators` in `config.js` to colour the map by them.
+
+## Basemaps
+
+All basemaps are free and need no API key: OpenStreetMap (default), Esri Light Grey and Esri Satellite. Switch between them with the layers button on each map.
 
 ## Data notes
 

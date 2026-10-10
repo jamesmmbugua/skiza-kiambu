@@ -103,24 +103,34 @@
 
   <!-- DASHBOARD VIEW -->
   <section id="view-dash" class="view">
-    <div class="wrap">
-      <h2>Campaign dashboard</h2>
-      <p class="muted">The Woman Representative is elected county-wide, so the dashboard shows all of Kiambu with Kabete as the home base.</p>
-      <div class="kpis" id="kpis"></div>
-      <div class="grid">
-        <div class="card"><h3>Registered voters by constituency, 2022</h3><canvas id="chConst"></canvas></div>
-        <div class="card"><h3>Kabete wards: registered voters, 2022</h3><canvas id="chKabete"></canvas></div>
-        <div class="card"><h3>Population growth by sub-county, 2009 to 2019</h3><canvas id="chGrowth"></canvas></div>
-        <div class="card"><h3>Kiambu population by age, 2019</h3><canvas id="chAge"></canvas></div>
-        <div class="card"><h3>Community needs by category</h3><canvas id="chNeeds"></canvas><p class="muted small" id="needsNote"></p></div>
-        <div class="card"><h3>Needs by ward</h3><canvas id="chNeedsWard"></canvas></div>
+    <div class="dash">
+      <div class="dash-map-col">
+        <div id="dashMap"></div>
+        <div class="dash-legend legend" id="dashLegend"></div>
       </div>
-      <div class="card">
-        <div class="card-head">
-          <h3>Ward targeting table (all 60 wards)</h3>
-          <button class="btn ghost" id="exportWards">Download CSV</button>
+      <div class="dash-panel">
+        <label class="field dash-pick">Jump to
+          <select id="dashSelect"></select>
+        </label>
+        <div class="crumbs" id="dashCrumbs"></div>
+        <h2 id="dashTitle">Kiambu County</h2>
+        <p class="muted small">Tap any ward on the map to see its figures. The Woman Representative is elected county-wide.</p>
+        <div class="kpis compact3" id="dashKpis"></div>
+        <div class="card">
+          <h3 id="cmpTitle"></h3>
+          <p class="muted small" id="cmpHint"></p>
+          <div class="chart-box" id="cmpBox"><canvas id="chCompare"></canvas></div>
         </div>
-        <div class="table-wrap"><table id="wardTable"></table></div>
+        <div class="card">
+          <div class="card-head"><h3>What residents are reporting</h3><button class="btn ghost" id="reportBtn">Report a need here</button></div>
+          <p class="muted small" id="needsEmpty">No needs reported here yet.</p>
+          <div class="chart-box" id="needsBox"><canvas id="chNeeds"></canvas></div>
+          <ul class="needs-list" id="needsList"></ul>
+        </div>
+        <div id="ctxCounty">
+          <div class="card"><h3>Population growth by sub-county, 2009 to 2019</h3><canvas id="chGrowth"></canvas></div>
+          <div class="card"><h3>Kiambu population by age, 2019</h3><canvas id="chAge"></canvas></div>
+        </div>
       </div>
     </div>
   </section>

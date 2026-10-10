@@ -86,6 +86,28 @@ tr.home td{background:#f0f7e8}
 #formMsg.ok{color:#1d7a46} #formMsg.err{color:#b3261e}
 .urg-3{color:#b3261e;font-weight:600} .urg-2{color:#a46a00} .urg-1{color:var(--muted)}
 
+/* dashboard: map left, panel right */
+#view-dash.active{overflow:hidden}
+.dash{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(360px,1fr);height:100%}
+.dash-map-col{position:relative;min-height:0}
+#dashMap{position:absolute;inset:0}
+.dash-legend{position:absolute;left:12px;bottom:24px;z-index:500;background:var(--card);padding:8px 10px;border-radius:10px;box-shadow:var(--shadow);width:220px}
+.dash-panel{overflow:auto;padding:14px 16px 30px;display:flex;flex-direction:column;gap:12px;border-left:1px solid var(--line)}
+.dash-panel h2{margin:0}
+.dash-panel > .muted{margin:0}
+.dash-pick{margin:0}
+.crumbs{font-size:.84rem;color:var(--muted)}
+.crumbs a{color:var(--brand);font-weight:600;text-decoration:none}
+.kpis.compact3{grid-template-columns:repeat(3,minmax(0,1fr));margin:0;gap:8px}
+.kpis.compact3 .kpi{padding:10px}
+.kpis.compact3 .kpi .v{font-size:1.15rem}
+.kpis.compact3 .kpi .l{font-size:.74rem}
+.chart-box{position:relative;width:100%}
+#ctxCounty{display:flex;flex-direction:column;gap:12px}
+#ctxCounty[hidden]{display:none}
+.needs-list{list-style:none;padding:0;margin:8px 0 0;font-size:.88rem}
+.needs-list li{padding:6px 0;border-top:1px solid var(--line)}
+
 /* home / hero */
 .hero{background:radial-gradient(circle at 85% 20%,rgba(140,198,63,.35),transparent 45%),linear-gradient(135deg,var(--deep),var(--brand) 60%,#1d8a3f);color:#fff;position:relative}
 .hero-inner{max-width:1200px;margin:0 auto;padding:36px 16px 40px;display:flex;gap:28px;align-items:center;position:relative}
@@ -123,6 +145,12 @@ h2.sec{margin:22px 0 10px}
   .party-logo{position:static;order:-1;max-height:52px}
   .hero-map{display:none}
   .home-grid{grid-template-columns:1fr}
+  #view-dash.active{overflow:auto}
+  .dash{display:block;height:auto}
+  .dash-map-col{height:46vh}
+  .dash-panel{border-left:0;overflow:visible}
+  .kpis.compact3{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .dash-legend{bottom:10px;width:150px;font-size:.7rem;padding:6px 8px}
   .topbar{padding:8px 12px}
   .tabs{width:100%;overflow-x:auto}
   .tabs button{flex:1;padding:7px 8px;font-size:.82rem;white-space:nowrap}
